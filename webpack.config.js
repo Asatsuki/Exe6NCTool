@@ -12,7 +12,7 @@ module.exports = {
             publicPath: '/dist/'
         },
         static: {
-            directory: path.join(__dirname, "./"),
+            directory: path.join(__dirname, "./dist"),
         }
     },
     devtool: 'inline-source-map',
