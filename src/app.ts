@@ -2,4 +2,4 @@ import { greeting } from './modules/sub';
 
 console.log('Hello, TypeScript');
 
-greeting('Rockman.EXE');
+greeting('Colonel.EXE');
