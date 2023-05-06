@@ -1,18 +1,20 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+const srcPath = path.join(__dirname, "src");
+const publicPath = path.join(__dirname, "public");
+const distPath = path.join(__dirname, "dist");
 
 module.exports = {
     mode: 'development',
-    entry: './src/app.ts',
+    entry: path.join(srcPath, "app.ts"),
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, './dist')
+        path: distPath
     },
     devServer: {
-        devMiddleware: {
-            publicPath: '/dist/'
-        },
         static: {
-            directory: path.join(__dirname, "./"),
+            directory: distPath
         }
     },
     devtool: 'inline-source-map',
@@ -27,5 +29,15 @@ module.exports = {
     },
     resolve: {
         extensions: ['.ts', '.js']
-    }
+    },
+    plugins: [
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: publicPath,
+                    to: distPath,
+                }
+            ]
+        })
+    ]
 };
