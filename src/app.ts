@@ -1,22 +1,43 @@
-import { Color, Part, PartUtils, partsData } from "./modules/parts_data";
+import { Color, Part, PartUtils } from "./modules/parts_data";
 
-class Spin{
-    public static 0 = new Spin(0);
-    public static 90 = new Spin(1);
-    public static 180 = new Spin(2);
-    public static 270 = new Spin(3);
-
-    public constructor(
-        rotate: number // 時計回り90°の回転回数
-    ) {}
-}
-
-class PartInstance{
+class PartInstance {
     public constructor (
-        public ncpart: Part,
+        public part: Part,
         public color: Color,
-        public spin: number
+        public spin: number,
+        public compressed: boolean,
+        public x: number,
+        public y: number
     ) {}
+
+    public placedMemMap(): boolean[][] | undefined {
+        let commandLine = false; // コマンドラインに1マスでもかかっているかどうか（かかっていないとプログラムパーツが無効）
+        let internal = false; // 中央5x5に1マスでもかかっているかどうか（かかっていないと置けない）
+        const memMap: boolean[][] = Array.from(new Array(mapH), () => new Array(mapW).fill(false));
+        const rotated = PartUtils.getRotatedShape(this.part, this.spin);
+        for (let pY = 0; pY < partH; pY++) {
+            for (let pX = 0; pX < partW; pX++) { // pX, pYはパーツ上の座標
+                const mapX = pX - centerX + this.x; // マップ上の対応座標
+                const mapY = pY - centerY + this.y; // マップ上の対応座標
+                if ((rotated[pY][pX] == 1)) { // この位置にパーツがある
+                    if (mapX < 0 || mapX >= mapW || mapY < 0 || mapY >= mapH) {
+                        // 枠外にはみ出る
+                        return undefined;
+                    } else if ((mapX == 0 || mapX == mapW-1) && (mapY == 0 || mapY == mapH-1)) {
+                        // 四隅を使う
+                        return undefined;
+                    } else {
+                        memMap[mapY][mapX] = true;
+                        if (mapY == 3) commandLine = true; 
+                        if (mapX >= 1 && mapX <= 5 && mapY >= 1 && mapY <= 5) internal = true;
+                    }
+                }
+            }
+        }
+        if (this.part.isProgram && !commandLine) return undefined;
+        if (!internal) return undefined;
+        return memMap;
+    }
 }
 
 const mapW = 7;
@@ -30,30 +51,109 @@ const mapCanvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
 const ctx = mapCanvas.getContext("2d") as CanvasRenderingContext2D;
 const gridImg = new Image();
 gridImg.src = "/img/grid.svg";
+const commandImg = new Image();
+commandImg.src = "/img/command_line.svg";
 
-const memoryMap: PartInstance[] = [];
+let memoryMap: PartInstance[] = [];
 const partList: Part[] = [];
 
 window.onload = () => {
-    draw();
+    /*
+    const testI = new PartInstance(
+        PartUtils.getPartFromName("バグストッパー") as Part,
+        Color.YELLOW,
+        2,
+        true,
+        1,
+        2
+    );
+    console.log(prittyPrintMemMap(testI.placedMemMap() as boolean[][]));
+    */
+
+    const simulated = simulate();
+    if (simulated != null) {
+        draw(simulated);
+    }
 }
 
-function simulate() {
+function simulate(): PartInstance[] | undefined {
     partList.splice(0);
-    partList.push();
+    partList.push(
+        PartUtils.getPartFromName("メガフォルダ1") as Part,
+        PartUtils.getPartFromName("リフレクト") as Part,
+        PartUtils.getPartFromName("カワリミマジック") as Part,
+        PartUtils.getPartFromName("ラピッドMAX") as Part,
+        PartUtils.getPartFromName("タンゴサポート") as Part,
+    );
+    const partsSorted = partList.sort((a, b) => PartUtils.getPartSize(b, true) - PartUtils.getPartSize(a, true));
+    const simulated = simulateStep(partsSorted, [], Array.from(new Array(mapH), () => new Array(mapW).fill(false)));
+    return simulated;
+    
+    // 再帰してシミュレート
+    function simulateStep(partList: Part[], placed: PartInstance[], memMap: boolean[][]): PartInstance[] | undefined {
+        const part = partList[0];
+        
+        for (let uc = 0; uc < 2; uc++) { // Uncompressed
+            const compressed = !uc;
+            for (let spin = 0; spin < 4; spin++) {
+                for (let pY = 0; pY < mapH; pY++) {
+                    for (let pX = 0; pX < mapW; pX++) {
+                        const partI = new PartInstance(part, part.colors[0], spin, compressed, pX, pY);
+                        const newMemMap = place(partI, memMap);
+                        if (newMemMap != null) {
+                            const newPartList = partList.concat();
+                            newPartList.shift();
+    
+                            const newPlaced = placed.concat();
+                            newPlaced.push(partI);
+                            
+                            console.log(partI);
+                            console.log(part.name + "\n" + prittyPrintMemMap(newMemMap));
+                            console.log(prittyPrintMemMap(partI.placedMemMap() as boolean[][]));
+    
+                            if (partList.length <= 1) return newPlaced;
+    
+                            const next = simulateStep(newPartList, newPlaced, newMemMap);
+                            if (next != null) {
+                                return next;
+                            }
+                        }
+                    }
+                }
+            }
+    }
+        
+        return undefined;
+    }
+
+    function place(partInstance: PartInstance, memMap: boolean[][]): boolean[][] | undefined {
+        const placedMemMap = partInstance.placedMemMap();
+        if (placedMemMap == null) return undefined; // 枠外にはみ出るなどで配置不能
+
+        const newMemMap: boolean[][] = Array.from(new Array(mapH), () => new Array(mapW).fill(false));
+        for (let pY = 0; pY < mapH; pY++) {
+            for (let pX = 0; pX < mapW; pX++) { // pX, pYはパーツ上の座標
+                if (placedMemMap[pY][pX] && memMap[pY][pX]) return undefined; // 重なるので配置不能
+                newMemMap[pY][pX] = placedMemMap[pY][pX] || memMap[pY][pX];
+            }
+        }
+        return newMemMap;
+    }
 }
 
-function draw() {
+function draw(parts: PartInstance[]) {
     const blockW = 64;
     const blockH = 64;
     const mapX = 32;
     const mapY = 32;
-    const lineWidth = 8;
+    const lineWidth = 3;
 
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
     // パーツを描画
-    drawPart(partsData[1], 3, 3);
+    parts.map(part => {
+        drawPart(part);
+    })
 
     // グリッドを描画
     for (let i = 0; i < mapH; i++) {
@@ -65,19 +165,63 @@ function draw() {
         }
     }
 
-    // 境目を描画
-    ctx.fillStyle = "black";
+    // コマンドラインを描画
+    ctx.drawImage(commandImg, mapX - blockW / 2, mapY - blockH / 2);
 
-    function drawPart(part: Part, x: number, y: number) {
-        const img = part.isProgram ? part.colors[0].img_prg : part.colors[0].img_pls;
+    function drawPart(partI: PartInstance) {
+        const img = partI.part.isProgram ? partI.color.img_prg : partI.color.img_pls;
 
-        for (let i = 0; i < partH; i++) {
-            for (let j = 0; j < partW; j++) {
-                if (part.shape[i][j]) {
-                    ctx.drawImage(img, mapX+(x+j-centerX)*blockW, mapY+(y+i-centerY)*blockH);
+        const memMap = partI.placedMemMap();
+        if (memMap == null) {
+            console.log(`${partI.part.name}の描画に失敗`);
+            return;
+        };
+        console.log(partI);
+        console.log(prittyPrintMemMap(memMap));
+        for (let pY = 0; pY < mapH; pY++) {
+            for (let pX = 0; pX < mapW; pX++) {
+                if (tryGetBlock(memMap, pX, pY)) {
+                    const startX = mapX + pX * blockW;
+                    const startY = mapY + pY * blockH;
+                    const endX = startX + blockW;
+                    const endY = startY + blockH;
+                    
+                    // ブロック描画
+                    ctx.drawImage(img, startX, startY);
+                    // 枠線
+                    ctx.fillStyle = "black";
+                    if (!tryGetBlock(memMap, pX-1, pY-1)) ctx.fillRect(startX, startY, lineWidth, lineWidth);
+                    if (!tryGetBlock(memMap, pX, pY-1)) ctx.fillRect(startX, startY, blockW, lineWidth);
+                    if (!tryGetBlock(memMap, pX+1, pY-1)) ctx.fillRect(endX-lineWidth, startY, lineWidth, lineWidth);
+                    if (!tryGetBlock(memMap, pX-1, pY)) ctx.fillRect(startX, startY, lineWidth, blockH);
+                    //
+                    if (!tryGetBlock(memMap, pX+1, pY)) ctx.fillRect(endX-lineWidth, startY, lineWidth, blockH);
+                    if (!tryGetBlock(memMap, pX-1, pY+1)) ctx.fillRect(startX, endY-lineWidth, lineWidth, lineWidth);
+                    if (!tryGetBlock(memMap, pX, pY+1)) ctx.fillRect(startX, endY-lineWidth, blockW, lineWidth);
+                    if (!tryGetBlock(memMap, pX+1, pY+1)) ctx.fillRect(endX-lineWidth, endY-lineWidth, lineWidth, lineWidth);
                 }
+            }
+        }
+
+        function tryGetBlock(memMap: boolean[][], x: number, y: number): boolean {
+            if (x < 0 || x >= mapW || y < 0 || y >= mapH) {
+                return false;
+            } else {
+                return memMap[y][x];
             }
         }
     }
 }
+
+function prittyPrintMemMap(memMap: boolean[][]): string {
+    let str = "";
+    memMap.map(el => {
+        el.map(el => {
+            str += el ? "■" : "□";
+        })
+        str += "\n"
+    });
+    return str
+}
+
 

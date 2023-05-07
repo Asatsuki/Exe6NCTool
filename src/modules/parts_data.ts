@@ -31,6 +31,10 @@ export interface Part {
 
 export namespace PartUtils {
 
+    export function getPartFromName(name: string): Part | undefined {
+        return partsData.find(x => x.name == name);
+    }
+
     export function getPartSize(part: Part, isCompressed: boolean): number {
         if (isCompressed) {
             return part.shape.flat().filter(x => x == 1).length;
@@ -39,14 +43,16 @@ export namespace PartUtils {
         }
     }
 
-    export function getRotatedShape<T>(shape: T[][], spin: number) {
+    export function getRotatedShape(part: Part, spin: number): number[][] {
+        let shape = part.shape;
         spin = spin % 4;
         for (let i = 0; i < spin; i++) {
-            shape = shape.reverse(); // 上下反転して
+            shape = [...shape].reverse(); // 上下反転して
             shape = shape[0].map(
                 (_: any, i: number) => shape.map(row => row[i])
             ); // 転置すると時計回りに回転する
         }
+        return shape;
     }
 }
 
