@@ -56,7 +56,7 @@ export namespace PartUtils {
     }
 }
 
-export const partsData: Part[] = [
+const partsData: Part[] = [
     {
         name: "スーパーアーマー",
         isProgram: true,
@@ -656,3 +656,4 @@ export const partsData: Part[] = [
         ]
     },
 ];
+

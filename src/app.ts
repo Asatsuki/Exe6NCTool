@@ -54,39 +54,40 @@ gridImg.src = "/img/grid.svg";
 const commandImg = new Image();
 commandImg.src = "/img/command_line.svg";
 
-let memoryMap: PartInstance[] = [];
 const partList: Part[] = [];
 
 window.onload = () => {
-    /*
-    const testI = new PartInstance(
-        PartUtils.getPartFromName("バグストッパー") as Part,
-        Color.YELLOW,
-        2,
-        true,
-        1,
-        2
-    );
-    console.log(prittyPrintMemMap(testI.placedMemMap() as boolean[][]));
-    */
-
+    console.time("simulate");
     const simulated = simulate();
-    if (simulated != null) {
-        draw(simulated);
-    }
+    console.timeEnd("simulate");
+    draw(simulated);
 }
 
 function simulate(): PartInstance[] | undefined {
+
+    let stepCount = 0;
+
     partList.splice(0);
     partList.push(
         PartUtils.getPartFromName("メガフォルダ1") as Part,
         PartUtils.getPartFromName("リフレクト") as Part,
         PartUtils.getPartFromName("カワリミマジック") as Part,
         PartUtils.getPartFromName("ラピッドMAX") as Part,
+        PartUtils.getPartFromName("チャージMAX") as Part,
         PartUtils.getPartFromName("タンゴサポート") as Part,
+        PartUtils.getPartFromName("スーパーアーマー") as Part,
+        PartUtils.getPartFromName("HP+500") as Part,
+        //PartUtils.getPartFromName("HP+100") as Part,
     );
+    const partTotal = partList.reduce((sum: number, element) => sum + PartUtils.getPartSize(element, true), 0);
+    if (partTotal > 45) {
+        return undefined;
+    }
+
     const partsSorted = partList.sort((a, b) => PartUtils.getPartSize(b, true) - PartUtils.getPartSize(a, true));
+    
     const simulated = simulateStep(partsSorted, [], Array.from(new Array(mapH), () => new Array(mapW).fill(false)));
+    console.log(stepCount);
     return simulated;
     
     // 再帰してシミュレート
@@ -98,6 +99,8 @@ function simulate(): PartInstance[] | undefined {
             for (let spin = 0; spin < 4; spin++) {
                 for (let pY = 0; pY < mapH; pY++) {
                     for (let pX = 0; pX < mapW; pX++) {
+                        stepCount++;
+                        //if (stepCount > 100000) return undefined;
                         const partI = new PartInstance(part, part.colors[0], spin, compressed, pX, pY);
                         const newMemMap = place(partI, memMap);
                         if (newMemMap != null) {
@@ -107,10 +110,6 @@ function simulate(): PartInstance[] | undefined {
                             const newPlaced = placed.concat();
                             newPlaced.push(partI);
                             
-                            console.log(partI);
-                            console.log(part.name + "\n" + prittyPrintMemMap(newMemMap));
-                            console.log(prittyPrintMemMap(partI.placedMemMap() as boolean[][]));
-    
                             if (partList.length <= 1) return newPlaced;
     
                             const next = simulateStep(newPartList, newPlaced, newMemMap);
@@ -122,7 +121,6 @@ function simulate(): PartInstance[] | undefined {
                 }
             }
     }
-        
         return undefined;
     }
 
@@ -141,7 +139,7 @@ function simulate(): PartInstance[] | undefined {
     }
 }
 
-function draw(parts: PartInstance[]) {
+function draw(parts: PartInstance[] | undefined) {
     const blockW = 64;
     const blockH = 64;
     const mapX = 32;
@@ -151,9 +149,11 @@ function draw(parts: PartInstance[]) {
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
     // パーツを描画
-    parts.map(part => {
-        drawPart(part);
-    })
+    if (parts != null) {
+        parts.map(part => {
+            drawPart(part);
+        })
+    }
 
     // グリッドを描画
     for (let i = 0; i < mapH; i++) {
