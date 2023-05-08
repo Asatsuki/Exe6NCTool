@@ -77,6 +77,7 @@ window.onload = () => {
     draw(simulated);
 }
 
+// 各パーツの配置の計算を何回もやるととても時間がかかるので、事前計算する
 function precalc() {
     partsData.map((part) => {
         const places: PlaceSet[] = new Array();
@@ -87,7 +88,7 @@ function precalc() {
                     for (let pX = 0; pX < mapW; pX++) {
                         const partI = new PartInstance(part, part.colors[0], spin, compressed, pX, pY);
                         const memMap = partI.placedMemMap();
-                        if (memMap != null) {
+                        if (memMap != null && !places.some((el => JSON.stringify(el.memMap) === JSON.stringify(memMap)))) {
                             places.push({
                                 memMap: memMap,
                                 partI: partI
@@ -102,6 +103,8 @@ function precalc() {
             places: places
         });
     });
+
+    console.log(precalcParts);
 }
 
 function simulate(): PartInstance[] | undefined {
@@ -118,7 +121,6 @@ function simulate(): PartInstance[] | undefined {
         PartUtils.getPartFromName("タンゴサポート") as Part,
         PartUtils.getPartFromName("スーパーアーマー") as Part,
         PartUtils.getPartFromName("HP+500") as Part,
-        //PartUtils.getPartFromName("HP+100") as Part,
     );
     const partTotal = partList.reduce((sum: number, element) => sum + PartUtils.getPartSize(element, true), 0);
     if (partTotal > 45) {
