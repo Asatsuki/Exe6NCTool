@@ -8,7 +8,7 @@
    version="1.1"
    id="svg5"
    inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
-   sodipodi:docname="command_line.svg"
+   sodipodi:docname="memory_map.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -25,9 +25,9 @@
      showgrid="true"
      units="px"
      inkscape:snap-page="true"
-     inkscape:zoom="0.73956188"
-     inkscape:cx="6.0846835"
-     inkscape:cy="233.2462"
+     inkscape:zoom="1.4791238"
+     inkscape:cx="135.55322"
+     inkscape:cy="197.07613"
      inkscape:window-width="1920"
      inkscape:window-height="1017"
      inkscape:window-x="-8"
@@ -37,8 +37,8 @@
     <inkscape:grid
        type="xygrid"
        id="grid925"
-       spacingx="4.2333331"
-       spacingy="4.2333331"
+       spacingx="2.1166666"
+       spacingy="2.1166666"
        empspacing="4" />
   </sodipodi:namedview>
   <defs
@@ -47,9 +47,12 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <path
-       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#29416a;stroke-width:2.11667;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
-       d="M 8.4666662,63.499997 H 122.76666 L 127,67.73333 122.76666,71.966663 H 8.4666662 Z"
-       id="path3215" />
+    <rect
+       style="fill:none;fill-rule:evenodd;stroke:#29416a;stroke-width:1.29353;stroke-miterlimit:4;stroke-dasharray:none;paint-order:stroke fill markers"
+       id="rect845"
+       width="93.133331"
+       height="93.133331"
+       x="21.166666"
+       y="21.166666" />
   </g>
 </svg>

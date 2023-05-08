@@ -64,6 +64,8 @@ const gridImg = new Image();
 gridImg.src = "/img/grid.svg";
 const commandImg = new Image();
 commandImg.src = "/img/command_line.svg";
+const memMapImg = new Image();
+memMapImg.src = "/img/memory_map.svg";
 
 const partList: Part[] = [];
 const precalcParts = new Map<string, PrecalcPart>();
@@ -198,6 +200,9 @@ function draw(parts: PartInstance[] | undefined) {
             ctx.drawImage(gridImg, mapX + j * blockW, mapY + i * blockH);
         }
     }
+
+    // メモリマップを描画
+    ctx.drawImage(memMapImg, mapX - blockW / 2, mapY - blockH / 2);
 
     // コマンドラインを描画
     ctx.drawImage(commandImg, mapX - blockW / 2, mapY - blockH / 2);
