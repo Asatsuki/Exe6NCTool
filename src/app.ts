@@ -1,4 +1,4 @@
-import { Color, Part, PartUtils } from "./modules/parts_data";
+import { Color, Part, PartUtils, partsData } from "./modules/parts_data";
 
 class PartInstance {
     public constructor (
@@ -40,6 +40,17 @@ class PartInstance {
     }
 }
 
+interface PlaceSet {
+    memMap: boolean[][]
+    partI: PartInstance
+}
+
+interface PrecalcPart {
+    part: Part,
+    places: PlaceSet[]
+}
+
+
 const mapW = 7;
 const mapH = 7;
 const partW = 5;
@@ -55,12 +66,42 @@ const commandImg = new Image();
 commandImg.src = "/img/command_line.svg";
 
 const partList: Part[] = [];
+const precalcParts = new Map<string, PrecalcPart>();
 
 window.onload = () => {
+    precalc();
+
     console.time("simulate");
     const simulated = simulate();
     console.timeEnd("simulate");
     draw(simulated);
+}
+
+function precalc() {
+    partsData.map((part) => {
+        const places: PlaceSet[] = new Array();
+        for (let uc = 0; uc < 2; uc++) { // Uncompressed
+            const compressed = !uc;
+            for (let spin = 0; spin < 4; spin++) {
+                for (let pY = 0; pY < mapH; pY++) {
+                    for (let pX = 0; pX < mapW; pX++) {
+                        const partI = new PartInstance(part, part.colors[0], spin, compressed, pX, pY);
+                        const memMap = partI.placedMemMap();
+                        if (memMap != null) {
+                            places.push({
+                                memMap: memMap,
+                                partI: partI
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        precalcParts.set(part.name, {
+            part: part,
+            places: places
+        });
+    });
 }
 
 function simulate(): PartInstance[] | undefined {
@@ -93,46 +134,37 @@ function simulate(): PartInstance[] | undefined {
     // 再帰してシミュレート
     function simulateStep(partList: Part[], placed: PartInstance[], memMap: boolean[][]): PartInstance[] | undefined {
         const part = partList[0];
-        
-        for (let uc = 0; uc < 2; uc++) { // Uncompressed
-            const compressed = !uc;
-            for (let spin = 0; spin < 4; spin++) {
-                for (let pY = 0; pY < mapH; pY++) {
-                    for (let pX = 0; pX < mapW; pX++) {
-                        stepCount++;
-                        //if (stepCount > 100000) return undefined;
-                        const partI = new PartInstance(part, part.colors[0], spin, compressed, pX, pY);
-                        const newMemMap = place(partI, memMap);
-                        if (newMemMap != null) {
-                            const newPartList = partList.concat();
-                            newPartList.shift();
-    
-                            const newPlaced = placed.concat();
-                            newPlaced.push(partI);
-                            
-                            if (partList.length <= 1) return newPlaced;
-    
-                            const next = simulateStep(newPartList, newPlaced, newMemMap);
-                            if (next != null) {
-                                return next;
-                            }
-                        }
-                    }
+        const precalcPart = precalcParts.get(part.name);
+        if (precalcPart == null) return undefined;
+
+        for (let i = 0; i < precalcPart.places.length; i++) {
+            const placeSet = precalcPart.places[i];
+            const partI = placeSet.partI;
+            const newMemMap = place(placeSet.memMap, memMap);
+            if (newMemMap != null) {
+                const newPartList = partList.concat();
+                newPartList.shift();
+
+                const newPlaced = placed.concat();
+                newPlaced.push(partI);
+                
+                if (partList.length <= 1) return newPlaced;
+
+                const next = simulateStep(newPartList, newPlaced, newMemMap);
+                if (next != null) {
+                    return next;
                 }
             }
-    }
+        }
         return undefined;
     }
 
-    function place(partInstance: PartInstance, memMap: boolean[][]): boolean[][] | undefined {
-        const placedMemMap = partInstance.placedMemMap();
-        if (placedMemMap == null) return undefined; // 枠外にはみ出るなどで配置不能
-
+    function place(memMapPart: boolean[][], memMapBoard: boolean[][]): boolean[][] | undefined {
         const newMemMap: boolean[][] = Array.from(new Array(mapH), () => new Array(mapW).fill(false));
         for (let pY = 0; pY < mapH; pY++) {
             for (let pX = 0; pX < mapW; pX++) { // pX, pYはパーツ上の座標
-                if (placedMemMap[pY][pX] && memMap[pY][pX]) return undefined; // 重なるので配置不能
-                newMemMap[pY][pX] = placedMemMap[pY][pX] || memMap[pY][pX];
+                if (memMapPart[pY][pX] && memMapBoard[pY][pX]) return undefined; // 重なるので配置不能
+                newMemMap[pY][pX] = memMapPart[pY][pX] || memMapBoard[pY][pX];
             }
         }
         return newMemMap;
