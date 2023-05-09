@@ -70,6 +70,10 @@ memMapImg.src = "/img/memory_map.svg";
 const partList: Part[] = [];
 const precalcParts = new Map<string, PrecalcPart>();
 
+window.addEventListener('DOMContentLoaded', (event) => {
+
+});
+
 window.onload = () => {
     precalc();
 
