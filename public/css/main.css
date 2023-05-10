@@ -1,0 +1,13 @@
+@font-face {
+  font-family: 'ExeChipFont';
+  src: url(../font/ExeChipFont.otf);
+}
+
+h1 {
+  font-family: ExeChipFont;
+}
+
+.tagify {    
+  width: 100%;
+  max-width: 512px;
+}

@@ -1,10 +1,16 @@
 <html lang="ja">
     <head>
         <meta charset="UTF-8">
+        <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
+        <link href="./css/main.css" rel="stylesheet" type="text/css" />
         <script type="module" src="bundle.js" defer></script>
         <title>ロックマンエグゼ6 ナビカスシミュレータ</title>
     </head>
     <body>
-        <h1>body</h1>
+        <h1>ロックマンエグゼ6 ナビカスシミュレータ</h1>
+        <canvas id="mapCanvas" width="704" height="512" style="background-color:#1f7ba4;">
+            表示するには、canvasタグをサポートしたブラウザが必要です。
+        </canvas>
+        <p><input name="tags" class="partsSelect" placeholder="パーツ名を入力" value="バグストッパー"></p>
     </body>
 </html>
