@@ -29,35 +29,6 @@ export class PartInstance {
         public x: number,
         public y: number
     ) {}
-
-    public placedMemMap(): boolean[][] | undefined {
-        let commandLine = false; // コマンドラインに1マスでもかかっているかどうか（かかっていないとプログラムパーツが無効）
-        let internal = false; // 中央5x5に1マスでもかかっているかどうか（かかっていないと置けない）
-        const memMap: boolean[][] = Array.from(new Array(Constants.mapH), () => new Array(Constants.mapW).fill(false));
-        const rotated = PartUtils.getRotatedShape(this.part, this.spin);
-        for (let pY = 0; pY < Constants.partH; pY++) {
-            for (let pX = 0; pX < Constants.partW; pX++) { // pX, pYはパーツ上の座標
-                const mapX = pX - Constants.centerX + this.x; // マップ上の対応座標
-                const mapY = pY - Constants.centerY + this.y; // マップ上の対応座標
-                if ((rotated[pY][pX] == 1)) { // この位置にパーツがある
-                    if (mapX < 0 || mapX >= Constants.mapW || mapY < 0 || mapY >= Constants.mapH) {
-                        // 枠外にはみ出る
-                        return undefined;
-                    } else if ((mapX == 0 || mapX == Constants.mapW-1) && (mapY == 0 || mapY == Constants.mapH-1)) {
-                        // 四隅を使う
-                        return undefined;
-                    } else {
-                        memMap[mapY][mapX] = true;
-                        if (mapY == 3) commandLine = true; 
-                        if (mapX >= 1 && mapX <= 5 && mapY >= 1 && mapY <= 5) internal = true;
-                    }
-                }
-            }
-        }
-        if (this.part.isProgram && !commandLine) return undefined;
-        if (!internal) return undefined;
-        return memMap;
-    }
 }
 
 export interface PlaceSet {
@@ -102,6 +73,35 @@ export namespace PartUtils {
             ); // 転置すると時計回りに回転する
         }
         return shape;
+    }
+
+    export function getPlacedMemMap(partI: PartInstance): boolean[][] | undefined {
+        let commandLine = false; // コマンドラインに1マスでもかかっているかどうか（かかっていないとプログラムパーツが無効）
+        let internal = false; // 中央5x5に1マスでもかかっているかどうか（かかっていないと置けない）
+        const memMap: boolean[][] = Array.from(new Array(Constants.mapH), () => new Array(Constants.mapW).fill(false));
+        const rotated = PartUtils.getRotatedShape(partI.part, partI.spin);
+        for (let pY = 0; pY < Constants.partH; pY++) {
+            for (let pX = 0; pX < Constants.partW; pX++) { // pX, pYはパーツ上の座標
+                const mapX = pX - Constants.centerX + partI.x; // マップ上の対応座標
+                const mapY = pY - Constants.centerY + partI.y; // マップ上の対応座標
+                if ((rotated[pY][pX] == 1)) { // この位置にパーツがある
+                    if (mapX < 0 || mapX >= Constants.mapW || mapY < 0 || mapY >= Constants.mapH) {
+                        // 枠外にはみ出る
+                        return undefined;
+                    } else if ((mapX == 0 || mapX == Constants.mapW-1) && (mapY == 0 || mapY == Constants.mapH-1)) {
+                        // 四隅を使う
+                        return undefined;
+                    } else {
+                        memMap[mapY][mapX] = true;
+                        if (mapY == 3) commandLine = true; 
+                        if (mapX >= 1 && mapX <= 5 && mapY >= 1 && mapY <= 5) internal = true;
+                    }
+                }
+            }
+        }
+        if (partI.part.isProgram && !commandLine) return undefined;
+        if (!internal) return undefined;
+        return memMap;
     }
 }
 

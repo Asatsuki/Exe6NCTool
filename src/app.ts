@@ -90,7 +90,7 @@ function precalc() {
                 for (let pY = 0; pY < c.mapH; pY++) {
                     for (let pX = 0; pX < c.mapW; pX++) {
                         const partI = new PartInstance(part, part.colors[0], spin, compressed, pX, pY);
-                        const memMap = partI.placedMemMap();
+                        const memMap = PartUtils.getPlacedMemMap(partI);
                         if (memMap != null && !places.some((el => JSON.stringify(el.memMap) === JSON.stringify(memMap)))) {
                             places.push({
                                 memMap: memMap,
@@ -155,7 +155,7 @@ function draw(parts: PartInstance[] | undefined) {
     function drawPart(partI: PartInstance) {
         const img = partI.part.isProgram ? partPrgImgs.get(partI.color.name) as HTMLImageElement : partPlsImgs.get(partI.color.name) as HTMLImageElement;
 
-        const memMap = partI.placedMemMap();
+        const memMap = PartUtils.getPlacedMemMap(partI);
         if (memMap == null) {
             console.log(`${partI.part.name}の描画に失敗`);
             return;

@@ -3,7 +3,8 @@ import { Constants as c, PartUtils, Part, PartInstance, PrecalcPart } from "../m
 const ctx: Worker = self as any;
 
 function simulate(partList: Part[], precalcParts: Map<string, PrecalcPart> ): PartInstance[] | undefined {
-
+    if (partList.length <= 0) return [];
+    
     const partTotal = partList.reduce((sum: number, element) => sum + PartUtils.getPartSize(element, true), 0);
     if (partTotal > 45) {
         return undefined;
@@ -54,16 +55,10 @@ function simulate(partList: Part[], precalcParts: Map<string, PrecalcPart> ): Pa
     }
 }
 
-
 ctx.onmessage = e => {
     const partList = e.data.partList;
     const precalcParts = e.data.precalcParts;
     const simulated = simulate(partList, precalcParts);
-    if (simulated != null) {
-        console.log(simulated[0].constructor.name);
     ctx.postMessage({simulated: simulated});
-    } else {
-        
-    }
     
 }
