@@ -95,6 +95,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
 window.onload = () => {
     precalc();
     simulateAsync();
+    worker.postMessage("worker start");
 }
 
 inputElm.onchange = () => {
@@ -113,6 +114,12 @@ async function simulateAsync() {
     
     const simulated = await simulate(partList);
     draw(simulated);
+}
+
+const worker = new Worker(new URL('./workers/simulate.worker.ts', import.meta.url));
+
+worker.onmessage = e => {
+    console.log("onmessage: " + e.data);
 }
 
 // 各パーツの配置の計算を何回もやるととても時間がかかるので、事前計算する
