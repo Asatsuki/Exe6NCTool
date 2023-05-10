@@ -62,13 +62,13 @@ const centerY = 2;
 const mapCanvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
 const ctx = mapCanvas.getContext("2d") as CanvasRenderingContext2D;
 const gridImg = new Image();
-gridImg.src = "/img/grid.svg";
+gridImg.src = "./img/grid.svg";
 const commandImg = new Image();
-commandImg.src = "/img/command_line.svg";
+commandImg.src = "./img/command_line.svg";
 const memMapImg = new Image();
-memMapImg.src = "/img/memory_map.svg";
+memMapImg.src = "./img/memory_map.svg";
 const partNameImg = new Image();
-partNameImg.src = "/img/part_name.svg";
+partNameImg.src = "./img/part_name.svg";
 
 const precalcParts = new Map<string, PrecalcPart>();
 const inputElm = document.querySelector('input[name=tags]') as HTMLInputElement;

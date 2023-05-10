@@ -15,9 +15,9 @@ export class Color {
         img_pls_name: string,
     ) {
         this.img_prg = new Image();
-        this.img_prg.src = `/img/${img_prg_name}`
+        this.img_prg.src = `./img/${img_prg_name}`
         this.img_pls = new Image();
-        this.img_pls.src = `/img/${img_pls_name}`
+        this.img_pls.src = `./img/${img_pls_name}`
     }
 }
 
