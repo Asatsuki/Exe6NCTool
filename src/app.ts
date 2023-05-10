@@ -1,4 +1,5 @@
 import { Color, Part, PartUtils, partsData } from "./modules/parts_data";
+import Tagify from '@yaireo/tagify'
 
 class PartInstance {
     public constructor (
@@ -66,20 +67,51 @@ const commandImg = new Image();
 commandImg.src = "/img/command_line.svg";
 const memMapImg = new Image();
 memMapImg.src = "/img/memory_map.svg";
+const partNameImg = new Image();
+partNameImg.src = "/img/part_name.svg";
 
-const partList: Part[] = [];
 const precalcParts = new Map<string, PrecalcPart>();
-
+const inputElm = document.querySelector('input[name=tags]') as HTMLInputElement;
+    
 window.addEventListener('DOMContentLoaded', (event) => {
+    const partNames: string[] = [];
+    partsData.map((el) => {
+        partNames.push(el.name);
+    });
 
+    const tagify = new Tagify(inputElm, {
+        originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(','),
+        enforceWhitelist: true,
+        whitelist: partNames,
+        duplicates: true,
+        maxTags: 12,
+        dropdown: {
+            maxItems: 9999,
+            enabled: 0
+        }
+    });
 });
 
 window.onload = () => {
     precalc();
+    simulateAsync();
+}
 
-    console.time("simulate");
-    const simulated = simulate();
-    console.timeEnd("simulate");
+inputElm.onchange = () => {
+    simulateAsync();
+}
+
+async function simulateAsync() {
+    const partsStr = inputElm.value.split(',');
+    const partList: Part[] = [];
+    partsStr.map((el) => {
+        const part = PartUtils.getPartFromName(el);
+        if (part != null) {
+            partList.push(part);
+        }
+    });
+    
+    const simulated = await simulate(partList);
     draw(simulated);
 }
 
@@ -110,33 +142,18 @@ function precalc() {
         });
     });
 
-    console.log(precalcParts);
 }
 
-function simulate(): PartInstance[] | undefined {
+function simulate(partList: Part[]): PartInstance[] | undefined {
 
-    let stepCount = 0;
-
-    partList.splice(0);
-    partList.push(
-        PartUtils.getPartFromName("メガフォルダ1") as Part,
-        PartUtils.getPartFromName("リフレクト") as Part,
-        PartUtils.getPartFromName("カワリミマジック") as Part,
-        PartUtils.getPartFromName("ラピッドMAX") as Part,
-        PartUtils.getPartFromName("チャージMAX") as Part,
-        PartUtils.getPartFromName("タンゴサポート") as Part,
-        PartUtils.getPartFromName("スーパーアーマー") as Part,
-        PartUtils.getPartFromName("HP+500") as Part,
-    );
     const partTotal = partList.reduce((sum: number, element) => sum + PartUtils.getPartSize(element, true), 0);
     if (partTotal > 45) {
         return undefined;
     }
-
-    const partsSorted = partList.sort((a, b) => PartUtils.getPartSize(b, true) - PartUtils.getPartSize(a, true));
     
+    const partsSorted = partList.sort((a, b) => PartUtils.getPartSize(b, true) - PartUtils.getPartSize(a, true));
+        
     const simulated = simulateStep(partsSorted, [], Array.from(new Array(mapH), () => new Array(mapW).fill(false)));
-    console.log(stepCount);
     return simulated;
     
     // 再帰してシミュレート
@@ -184,14 +201,24 @@ function draw(parts: PartInstance[] | undefined) {
     const blockH = 64;
     const mapX = 32;
     const mapY = 32;
-    const lineWidth = 3;
+    const nameX = 512;
+    const nameY = 52;
+    const lineWidth = 4;
+    const nameHeight = 32;
+    const nameWidth = 120;
 
+    
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+    // パーツ名の枠を描画
+    ctx.drawImage(partNameImg, nameX, nameY);
 
     // パーツを描画
     if (parts != null) {
-        parts.map(part => {
+        const partsSorted = parts.sort((a, b) => partsData.indexOf(a.part) - partsData.indexOf(b.part))
+        partsSorted.map((part, i) => {
             drawPart(part);
+            drawPartName(part, i);
         })
     }
 
@@ -219,8 +246,8 @@ function draw(parts: PartInstance[] | undefined) {
             console.log(`${partI.part.name}の描画に失敗`);
             return;
         };
-        console.log(partI);
-        console.log(prittyPrintMemMap(memMap));
+        //console.log(partI);
+        //console.log(prittyPrintMemMap(memMap));
         for (let pY = 0; pY < mapH; pY++) {
             for (let pX = 0; pX < mapW; pX++) {
                 if (tryGetBlock(memMap, pX, pY)) {
@@ -253,6 +280,14 @@ function draw(parts: PartInstance[] | undefined) {
                 return memMap[y][x];
             }
         }
+    }
+
+    function drawPartName(partI: PartInstance, index: number) {
+        const xOffset = Math.floor(index / 14) * nameWidth;
+        const yOffset = (index % 14) * nameHeight;
+        ctx.fillStyle = "white"
+        ctx.font = "normal 22px 'ExeChipFont'";
+        ctx.fillText(partI.part.name, nameX + 10 + xOffset, nameY + 32 + yOffset);
     }
 }
 

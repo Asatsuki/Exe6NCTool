@@ -48,7 +48,7 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#29416a;stroke-width:2.11667;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2.11667;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
        d="M 8.4666662,63.499997 H 122.76666 L 127,67.73333 122.76666,71.966663 H 8.4666662 Z"
        id="path3215" />
   </g>

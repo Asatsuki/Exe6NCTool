@@ -2,32 +2,32 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="64"
-   height="64"
-   viewBox="0 0 16.933333 16.933333"
+   width="320"
+   height="448"
+   viewBox="0 0 84.666666 118.53333"
    version="1.1"
    id="svg5"
    inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
-   sodipodi:docname="grid2.svg"
+   sodipodi:docname="part_name.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
      id="namedview7"
-     pagecolor="#ffffff"
+     pagecolor="#000000"
      bordercolor="#666666"
      borderopacity="1.0"
      inkscape:pageshadow="2"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="0"
      inkscape:pagecheckerboard="0"
      inkscape:document-units="px"
      showgrid="true"
      units="px"
      inkscape:snap-page="true"
-     inkscape:zoom="5.1458333"
-     inkscape:cx="49.846154"
-     inkscape:cy="23.611336"
+     inkscape:zoom="2.5729167"
+     inkscape:cx="76.761134"
+     inkscape:cy="278.08907"
      inkscape:window-width="1920"
      inkscape:window-height="1017"
      inkscape:window-x="-8"
@@ -47,10 +47,13 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <path
-       id="path2130"
-       style="fill:#000000;fill-opacity:0.2;fill-rule:evenodd;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke fill markers"
-       d="M 0 0 L 0 64 L 64 64 L 64 0 L 0 0 z M 4 4 L 60 4 L 60 60 L 4 60 L 4 4 z "
-       transform="scale(0.26458333)" />
+    <rect
+       style="fill:#10526a;fill-opacity:1;fill-rule:evenodd;stroke:#acc5de;stroke-width:2.11667;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       id="rect926"
+       width="33.866665"
+       height="103.71667"
+       x="1.0583333"
+       y="1.0583333"
+       ry="1.0583334" />
   </g>
 </svg>
