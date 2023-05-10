@@ -13,6 +13,8 @@ const memMapImg = new Image();
 memMapImg.src = "./img/memory_map.svg";
 const partNameImg = new Image();
 partNameImg.src = "./img/part_name.svg";
+const appUrlImg = new Image();
+appUrlImg.src = "./img/app_url.png";
 
 const partPrgImgs = new Map<string, HTMLImageElement>();
 const partPlsImgs = new Map<string, HTMLImageElement>();
@@ -124,6 +126,8 @@ function draw(parts: PartInstance[] | undefined) {
     
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
+    ctx.save();
+
     // パーツ名の枠を描画
     ctx.drawImage(partNameImg, nameX, nameY);
 
@@ -152,7 +156,13 @@ function draw(parts: PartInstance[] | undefined) {
     // コマンドラインを描画
     ctx.drawImage(commandImg, mapX - blockW / 2, mapY - blockH / 2);
 
+    drawVersion();
+
+    ctx.restore();
+
     function drawPart(partI: PartInstance) {
+        ctx.restore();
+        
         const img = partI.part.isProgram ? partPrgImgs.get(partI.color.name) as HTMLImageElement : partPlsImgs.get(partI.color.name) as HTMLImageElement;
 
         const memMap = PartUtils.getPlacedMemMap(partI);
@@ -199,9 +209,27 @@ function draw(parts: PartInstance[] | undefined) {
     function drawPartName(partI: PartInstance, index: number) {
         const xOffset = Math.floor(index / 14) * nameWidth;
         const yOffset = (index % 14) * nameHeight;
-        ctx.fillStyle = "white"
+        ctx.fillStyle = "white";
+        ctx.shadowColor = "#726c69ff";
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.textAlign = "left"
         ctx.font = "normal 22px 'ExeChipFont'";
         ctx.fillText(partI.part.name, nameX + 10 + xOffset, nameY + 32 + yOffset);
+        ctx.shadowColor = "#00000000";
+    }
+
+    function drawVersion() {
+        const versionX = 2;
+        const versionY = 20;
+        const urlX = 2;
+        const urlY = ctx.canvas.height - 32;
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left"
+        ctx.font = "normal 18px 'ExeChipFont'";
+        ctx.fillText("ロックマンエグゼ6 ナビカスシミュレータ", versionX, versionY);
+        ctx.fillText("V1.1.0", versionX, versionY + 20);
+        ctx.drawImage(appUrlImg, urlX, urlY);
     }
 }
 
