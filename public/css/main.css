@@ -10,4 +10,5 @@ h1 {
 .tagify {    
   width: 100%;
   max-width: 704px;
+  --tag-inset-shadow-size: 2em;
 }
