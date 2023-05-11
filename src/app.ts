@@ -5,6 +5,10 @@ import Tagify from '@yaireo/tagify'
 const mapCanvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
 const ctx = mapCanvas.getContext("2d") as CanvasRenderingContext2D;
 
+const exeChipFont = new FontFace('ExeChipFont', 'url(./font/ExeChipFont.otf)');
+exeChipFont.load().then((font) => {
+    document.fonts.add(font);
+});
 const gridImg = new Image();
 gridImg.src = "./img/grid.svg";
 const commandImg = new Image();
@@ -32,6 +36,7 @@ const partPlsImgs = new Map<string, HTMLImageElement>();
 
 const precalcParts = new Map<string, PrecalcPart>();
 const inputElm = document.querySelector('input[name=tags]') as HTMLInputElement;
+const saveImgButton = document.querySelector('button[name=saveImg]') as HTMLInputElement; 
     
 window.addEventListener('DOMContentLoaded', (event) => {
     const partNames: string[] = [];
@@ -52,9 +57,22 @@ window.addEventListener('DOMContentLoaded', (event) => {
     });
 });
 
+const worker = new Worker(new URL('./workers/simulate.worker.ts', import.meta.url), {type: 'module'});
+
 window.onload = () => {
     precalc();
     doSimulate();
+}
+
+saveImgButton.onclick = () => {
+    mapCanvas.toBlob(blob => {
+        if (blob == null) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Exe6NCTool.png`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }, "image/png")
 }
 
 inputElm.onchange = () => {
@@ -74,8 +92,6 @@ function doSimulate() {
     worker.postMessage({partList: partList, precalcParts: precalcParts});
     
 }
-
-const worker = new Worker(new URL('./workers/simulate.worker.ts', import.meta.url), {type: 'module'});
 
 worker.onmessage = e => {
     const simulated = e.data.simulated as PartInstance[];
@@ -127,6 +143,10 @@ function draw(parts: PartInstance[] | undefined) {
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
     ctx.save();
+
+    // 背景を描画
+    ctx.fillStyle = "#1f7ba4";
+    ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
 
     // パーツ名の枠を描画
     ctx.drawImage(partNameImg, nameX, nameY);
@@ -214,21 +234,20 @@ function draw(parts: PartInstance[] | undefined) {
         ctx.shadowOffsetX = 2;
         ctx.shadowOffsetY = 2;
         ctx.textAlign = "left"
-        ctx.font = "normal 22px 'ExeChipFont'";
+        ctx.font = "normal 22px ExeChipFont";
         ctx.fillText(partI.part.name, nameX + 10 + xOffset, nameY + 32 + yOffset);
         ctx.shadowColor = "#00000000";
     }
 
     function drawVersion() {
-        const versionX = 2;
-        const versionY = 20;
+        const versionX = 6;
+        const versionY = 24;
         const urlX = 2;
         const urlY = ctx.canvas.height - 32;
         ctx.fillStyle = "white";
         ctx.textAlign = "left"
-        ctx.font = "normal 18px 'ExeChipFont'";
-        ctx.fillText("ロックマンエグゼ6 ナビカスシミュレータ", versionX, versionY);
-        ctx.fillText("V1.1.0", versionX, versionY + 20);
+        ctx.font = "normal 20px ExeChipFont";
+        //ctx.fillText("ロックマンエグゼ6 ナビカスシミュレータ", versionX, versionY);
         ctx.drawImage(appUrlImg, urlX, urlY);
     }
 }

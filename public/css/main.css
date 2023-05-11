@@ -1,14 +1,39 @@
-@font-face {
-  font-family: 'ExeChipFont';
-  src: url(../font/ExeChipFont.otf);
+body {
+  min-height: 100vh;
+  background-color: #ddeeff;
+  font-size: 16px;
 }
 
 h1 {
-  font-family: ExeChipFont;
+  font-size: 200%
+}
+
+#main {
+  position: relative;
+  max-width: 704px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+#mapCanvas {
+  width: 100%;
+  max-width: 704px;
 }
 
 .tagify {    
   width: 100%;
   max-width: 704px;
+  background-color: white;
   --tag-inset-shadow-size: 2em;
+}
+
+@media only screen and (max-width: 600px) {
+  #main {
+    max-width: none;
+  }
+
+  h1 {
+    font-size: 100%
+  }
 }

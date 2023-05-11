@@ -1,16 +1,21 @@
 <html lang="ja">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
         <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
         <link href="./css/main.css" rel="stylesheet" type="text/css" />
-        <script type="module" src="bundle.js" defer></script>
         <title>ロックマンエグゼ6 ナビカスシミュレータ</title>
     </head>
     <body>
-        <h1>ロックマンエグゼ6 ナビカスシミュレータ</h1>
-        <canvas id="mapCanvas" width="704" height="512" style="background-color:#1f7ba4;">
-            表示するには、canvasタグをサポートしたブラウザが必要です。
-        </canvas>
-        <p><input name="tags" class="partsSelect" placeholder="パーツ名を入力" value="バグストッパー"></p>
+        <div id="main">
+            <h1>ロックマンエグゼ6 ナビカスシミュレータ</h1>
+            <p><a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-text="エグゼ6ナビカスシミュレータ" data-url="https://asatsuki.github.io/Exe6NCTool/" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></p>
+            <canvas id="mapCanvas" width="704" height="512" style="background-color:#1f7ba4;">
+                表示するには、canvasタグをサポートしたブラウザが必要です。
+            </canvas>
+            <p><input name="tags" class="partsSelect" placeholder="パーツ名を入力" value="バグストッパー"></p>
+            <p><button name="saveImg" type="button">画像で保存</button></p>
+        </div>
+        <script type="module" src="bundle.js" defer></script>
     </body>
 </html>
