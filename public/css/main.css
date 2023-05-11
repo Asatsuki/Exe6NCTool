@@ -8,6 +8,24 @@ h1 {
   font-size: 200%
 }
 
+button {
+  color: white;
+  font-size: 100%;
+  padding: 10px 10px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button.submit {
+  background-color: #0f7fff;
+  transition: all 0.2s;
+}
+
+button.submit:hover {
+  background-color: #3493ff;
+}
+
 #main {
   position: relative;
   max-width: 704px;
