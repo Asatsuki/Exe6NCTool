@@ -39,6 +39,11 @@ button.submit:hover {
   max-width: 704px;
 }
 
+.annotation {
+  font-size: 60%;
+  color: #999999;
+}
+
 .tagify {    
   width: 100%;
   max-width: 704px;
