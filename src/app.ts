@@ -1,66 +1,14 @@
-import { Color, Part, PartUtils, partsData } from "./modules/parts_data";
+import { Constants as c, Color, Part, PartInstance, PlaceSet, PrecalcPart, PartUtils, partsData } from "./modules/parts_data";
+
 import Tagify from '@yaireo/tagify'
-
-class PartInstance {
-    public constructor (
-        public part: Part,
-        public color: Color,
-        public spin: number,
-        public compressed: boolean,
-        public x: number,
-        public y: number
-    ) {}
-
-    public placedMemMap(): boolean[][] | undefined {
-        let commandLine = false; // コマンドラインに1マスでもかかっているかどうか（かかっていないとプログラムパーツが無効）
-        let internal = false; // 中央5x5に1マスでもかかっているかどうか（かかっていないと置けない）
-        const memMap: boolean[][] = Array.from(new Array(mapH), () => new Array(mapW).fill(false));
-        const rotated = PartUtils.getRotatedShape(this.part, this.spin);
-        for (let pY = 0; pY < partH; pY++) {
-            for (let pX = 0; pX < partW; pX++) { // pX, pYはパーツ上の座標
-                const mapX = pX - centerX + this.x; // マップ上の対応座標
-                const mapY = pY - centerY + this.y; // マップ上の対応座標
-                if ((rotated[pY][pX] == 1)) { // この位置にパーツがある
-                    if (mapX < 0 || mapX >= mapW || mapY < 0 || mapY >= mapH) {
-                        // 枠外にはみ出る
-                        return undefined;
-                    } else if ((mapX == 0 || mapX == mapW-1) && (mapY == 0 || mapY == mapH-1)) {
-                        // 四隅を使う
-                        return undefined;
-                    } else {
-                        memMap[mapY][mapX] = true;
-                        if (mapY == 3) commandLine = true; 
-                        if (mapX >= 1 && mapX <= 5 && mapY >= 1 && mapY <= 5) internal = true;
-                    }
-                }
-            }
-        }
-        if (this.part.isProgram && !commandLine) return undefined;
-        if (!internal) return undefined;
-        return memMap;
-    }
-}
-
-interface PlaceSet {
-    memMap: boolean[][]
-    partI: PartInstance
-}
-
-interface PrecalcPart {
-    part: Part,
-    places: PlaceSet[]
-}
-
-
-const mapW = 7;
-const mapH = 7;
-const partW = 5;
-const partH = 5;
-const centerX = 2;
-const centerY = 2;
 
 const mapCanvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
 const ctx = mapCanvas.getContext("2d") as CanvasRenderingContext2D;
+
+const exeChipFont = new FontFace('ExeChipFont', 'url(./font/ExeChipFont.otf)');
+exeChipFont.load().then((font) => {
+    document.fonts.add(font);
+});
 const gridImg = new Image();
 gridImg.src = "./img/grid.svg";
 const commandImg = new Image();
@@ -69,9 +17,26 @@ const memMapImg = new Image();
 memMapImg.src = "./img/memory_map.svg";
 const partNameImg = new Image();
 partNameImg.src = "./img/part_name.svg";
+const appUrlImg = new Image();
+appUrlImg.src = "./img/app_url.png";
+
+const partPrgImgs = new Map<string, HTMLImageElement>();
+const partPlsImgs = new Map<string, HTMLImageElement>();
+(function () {
+    const colors = ["white", "red", "blue", "green", "yellow", "pink"];
+    colors.map((el) => {
+        const partPrgImg = new Image();
+        partPrgImg.src = `./img/prg_${el}.svg`;
+        partPrgImgs.set(el, partPrgImg);
+        const partPlsImg = new Image();
+        partPlsImg.src = `./img/pls_${el}.svg`;
+        partPlsImgs.set(el, partPlsImg);
+    });
+}());
 
 const precalcParts = new Map<string, PrecalcPart>();
 const inputElm = document.querySelector('input[name=tags]') as HTMLInputElement;
+const saveImgButton = document.querySelector('button[name=saveImg]') as HTMLInputElement; 
     
 window.addEventListener('DOMContentLoaded', (event) => {
     const partNames: string[] = [];
@@ -92,16 +57,29 @@ window.addEventListener('DOMContentLoaded', (event) => {
     });
 });
 
+const worker = new Worker(new URL('./workers/simulate.worker.ts', import.meta.url), {type: 'module'});
+
 window.onload = () => {
     precalc();
-    simulateAsync();
+    doSimulate();
+}
+
+saveImgButton.onclick = () => {
+    mapCanvas.toBlob(blob => {
+        if (blob == null) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Exe6NCTool.png`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }, "image/png")
 }
 
 inputElm.onchange = () => {
-    simulateAsync();
+    doSimulate();
 }
 
-async function simulateAsync() {
+function doSimulate() {
     const partsStr = inputElm.value.split(',');
     const partList: Part[] = [];
     partsStr.map((el) => {
@@ -111,7 +89,12 @@ async function simulateAsync() {
         }
     });
     
-    const simulated = await simulate(partList);
+    worker.postMessage({partList: partList, precalcParts: precalcParts});
+    
+}
+
+worker.onmessage = e => {
+    const simulated = e.data.simulated as PartInstance[];
     draw(simulated);
 }
 
@@ -122,10 +105,10 @@ function precalc() {
         for (let uc = 0; uc < 2; uc++) { // Uncompressed
             const compressed = !uc;
             for (let spin = 0; spin < 4; spin++) {
-                for (let pY = 0; pY < mapH; pY++) {
-                    for (let pX = 0; pX < mapW; pX++) {
+                for (let pY = 0; pY < c.mapH; pY++) {
+                    for (let pX = 0; pX < c.mapW; pX++) {
                         const partI = new PartInstance(part, part.colors[0], spin, compressed, pX, pY);
-                        const memMap = partI.placedMemMap();
+                        const memMap = PartUtils.getPlacedMemMap(partI);
                         if (memMap != null && !places.some((el => JSON.stringify(el.memMap) === JSON.stringify(memMap)))) {
                             places.push({
                                 memMap: memMap,
@@ -144,57 +127,6 @@ function precalc() {
 
 }
 
-function simulate(partList: Part[]): PartInstance[] | undefined {
-
-    const partTotal = partList.reduce((sum: number, element) => sum + PartUtils.getPartSize(element, true), 0);
-    if (partTotal > 45) {
-        return undefined;
-    }
-    
-    const partsSorted = partList.sort((a, b) => PartUtils.getPartSize(b, true) - PartUtils.getPartSize(a, true));
-        
-    const simulated = simulateStep(partsSorted, [], Array.from(new Array(mapH), () => new Array(mapW).fill(false)));
-    return simulated;
-    
-    // 再帰してシミュレート
-    function simulateStep(partList: Part[], placed: PartInstance[], memMap: boolean[][]): PartInstance[] | undefined {
-        const part = partList[0];
-        const precalcPart = precalcParts.get(part.name);
-        if (precalcPart == null) return undefined;
-
-        for (let i = 0; i < precalcPart.places.length; i++) {
-            const placeSet = precalcPart.places[i];
-            const partI = placeSet.partI;
-            const newMemMap = place(placeSet.memMap, memMap);
-            if (newMemMap != null) {
-                const newPartList = partList.concat();
-                newPartList.shift();
-
-                const newPlaced = placed.concat();
-                newPlaced.push(partI);
-                
-                if (partList.length <= 1) return newPlaced;
-
-                const next = simulateStep(newPartList, newPlaced, newMemMap);
-                if (next != null) {
-                    return next;
-                }
-            }
-        }
-        return undefined;
-    }
-
-    function place(memMapPart: boolean[][], memMapBoard: boolean[][]): boolean[][] | undefined {
-        const newMemMap: boolean[][] = Array.from(new Array(mapH), () => new Array(mapW).fill(false));
-        for (let pY = 0; pY < mapH; pY++) {
-            for (let pX = 0; pX < mapW; pX++) { // pX, pYはパーツ上の座標
-                if (memMapPart[pY][pX] && memMapBoard[pY][pX]) return undefined; // 重なるので配置不能
-                newMemMap[pY][pX] = memMapPart[pY][pX] || memMapBoard[pY][pX];
-            }
-        }
-        return newMemMap;
-    }
-}
 
 function draw(parts: PartInstance[] | undefined) {
     const blockW = 64;
@@ -210,6 +142,12 @@ function draw(parts: PartInstance[] | undefined) {
     
     ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
+    ctx.save();
+
+    // 背景を描画
+    ctx.fillStyle = "#1f7ba4";
+    ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+
     // パーツ名の枠を描画
     ctx.drawImage(partNameImg, nameX, nameY);
 
@@ -223,8 +161,8 @@ function draw(parts: PartInstance[] | undefined) {
     }
 
     // グリッドを描画
-    for (let i = 0; i < mapH; i++) {
-        for (let j = 0; j < mapW; j++) {
+    for (let i = 0; i < c.mapH; i++) {
+        for (let j = 0; j < c.mapW; j++) {
             if ((i == 0 || i == 6) && (j == 0 || j == 6)) {
                 continue;
             }
@@ -238,18 +176,24 @@ function draw(parts: PartInstance[] | undefined) {
     // コマンドラインを描画
     ctx.drawImage(commandImg, mapX - blockW / 2, mapY - blockH / 2);
 
-    function drawPart(partI: PartInstance) {
-        const img = partI.part.isProgram ? partI.color.img_prg : partI.color.img_pls;
+    drawVersion();
 
-        const memMap = partI.placedMemMap();
+    ctx.restore();
+
+    function drawPart(partI: PartInstance) {
+        ctx.restore();
+        
+        const img = partI.part.isProgram ? partPrgImgs.get(partI.color.name) as HTMLImageElement : partPlsImgs.get(partI.color.name) as HTMLImageElement;
+
+        const memMap = PartUtils.getPlacedMemMap(partI);
         if (memMap == null) {
             console.log(`${partI.part.name}の描画に失敗`);
             return;
         };
         //console.log(partI);
         //console.log(prittyPrintMemMap(memMap));
-        for (let pY = 0; pY < mapH; pY++) {
-            for (let pX = 0; pX < mapW; pX++) {
+        for (let pY = 0; pY < c.mapH; pY++) {
+            for (let pX = 0; pX < c.mapW; pX++) {
                 if (tryGetBlock(memMap, pX, pY)) {
                     const startX = mapX + pX * blockW;
                     const startY = mapY + pY * blockH;
@@ -274,7 +218,7 @@ function draw(parts: PartInstance[] | undefined) {
         }
 
         function tryGetBlock(memMap: boolean[][], x: number, y: number): boolean {
-            if (x < 0 || x >= mapW || y < 0 || y >= mapH) {
+            if (x < 0 || x >= c.mapW || y < 0 || y >= c.mapH) {
                 return false;
             } else {
                 return memMap[y][x];
@@ -285,9 +229,26 @@ function draw(parts: PartInstance[] | undefined) {
     function drawPartName(partI: PartInstance, index: number) {
         const xOffset = Math.floor(index / 14) * nameWidth;
         const yOffset = (index % 14) * nameHeight;
-        ctx.fillStyle = "white"
-        ctx.font = "normal 22px 'ExeChipFont'";
+        ctx.fillStyle = "white";
+        ctx.shadowColor = "#726c69ff";
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.textAlign = "left"
+        ctx.font = "normal 22px ExeChipFont";
         ctx.fillText(partI.part.name, nameX + 10 + xOffset, nameY + 32 + yOffset);
+        ctx.shadowColor = "#00000000";
+    }
+
+    function drawVersion() {
+        const versionX = 6;
+        const versionY = 24;
+        const urlX = 2;
+        const urlY = ctx.canvas.height - 32;
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left"
+        ctx.font = "normal 20px ExeChipFont";
+        //ctx.fillText("ロックマンエグゼ6 ナビカスシミュレータ", versionX, versionY);
+        ctx.drawImage(appUrlImg, urlX, urlY);
     }
 }
 

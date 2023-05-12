@@ -1,16 +1,24 @@
 <html lang="ja">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
         <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css" />
         <link href="./css/main.css" rel="stylesheet" type="text/css" />
-        <script type="module" src="bundle.js" defer></script>
         <title>ロックマンエグゼ6 ナビカスシミュレータ</title>
     </head>
     <body>
-        <h1>ロックマンエグゼ6 ナビカスシミュレータ</h1>
-        <canvas id="mapCanvas" width="704" height="512" style="background-color:#1f7ba4;">
-            表示するには、canvasタグをサポートしたブラウザが必要です。
-        </canvas>
-        <p><input name="tags" class="partsSelect" placeholder="パーツ名を入力" value="バグストッパー"></p>
+        <div id="main">
+            <h1>ロックマンエグゼ6 ナビカスシミュレータ</h1>
+            <p><a href="http://twitter.com/share?url=https://asatsuki.github.io/Exe6NCTool/&text=ロックマンエグゼ6 ナビカスシミュレータ" target="_blank">
+                <img src="./img/twitter.svg" width="24">
+            </a></p>
+            <canvas id="mapCanvas" width="704" height="512" style="background-color:#1f7ba4;">
+                表示するには、canvasタグをサポートしたブラウザが必要です。
+            </canvas>
+            <p><input name="tags" class="partsSelect" placeholder="パーツ名を入力" value="バグストッパー"></p>
+            <p class="annotation">ナビカスバグは考慮しません（バグストッパー前提）。</p>
+            <p><button name="saveImg" class="submit" type="button">画像で保存</button></p>
+        </div>
+        <script type="module" src="bundle.js" defer></script>
     </body>
 </html>

@@ -1,24 +1,44 @@
-export class Color {
-    public static WHITE = new Color("white", "prg_white.svg", "pls_white.svg");
-    public static RED = new Color("red", "prg_red.svg", "pls_red.svg");
-    public static BLUE = new Color("blue", "prg_blue.svg", "pls_blue.svg");
-    public static GREEN = new Color("green", "prg_green.svg", "pls_green.svg");
-    public static YELLOW = new Color("yellow", "prg_yellow.svg", "pls_yellow.svg");
-    public static PINK = new Color("pink", "prg_pink.svg", "pls_pink.svg");
+export namespace Constants {
+    export const mapW = 7;
+    export const mapH = 7;
+    export const partW = 5;
+    export const partH = 5;
+    export const centerX = 2;
+    export const centerY = 2;
+}
 
-    public img_prg: HTMLImageElement;
-    public img_pls: HTMLImageElement;
+export class Color {
+    public static WHITE = new Color("white");
+    public static RED = new Color("red");
+    public static BLUE = new Color("blue");
+    public static GREEN = new Color("green");
+    public static YELLOW = new Color("yellow");
+    public static PINK = new Color("pink");
 
     public constructor(
-        public name: string,
-        img_prg_name: string,
-        img_pls_name: string,
-    ) {
-        this.img_prg = new Image();
-        this.img_prg.src = `./img/${img_prg_name}`
-        this.img_pls = new Image();
-        this.img_pls.src = `./img/${img_pls_name}`
-    }
+        public name: string
+    ) { }
+}
+
+export class PartInstance {
+    public constructor (
+        public part: Part,
+        public color: Color,
+        public spin: number,
+        public compressed: boolean,
+        public x: number,
+        public y: number
+    ) {}
+}
+
+export interface PlaceSet {
+    memMap: boolean[][]
+    partI: PartInstance
+}
+
+export interface PrecalcPart {
+    part: Part,
+    places: PlaceSet[]
 }
 
 export interface Part {
@@ -53,6 +73,35 @@ export namespace PartUtils {
             ); // 転置すると時計回りに回転する
         }
         return shape;
+    }
+
+    export function getPlacedMemMap(partI: PartInstance): boolean[][] | undefined {
+        let commandLine = false; // コマンドラインに1マスでもかかっているかどうか（かかっていないとプログラムパーツが無効）
+        let internal = false; // 中央5x5に1マスでもかかっているかどうか（かかっていないと置けない）
+        const memMap: boolean[][] = Array.from(new Array(Constants.mapH), () => new Array(Constants.mapW).fill(false));
+        const rotated = PartUtils.getRotatedShape(partI.part, partI.spin);
+        for (let pY = 0; pY < Constants.partH; pY++) {
+            for (let pX = 0; pX < Constants.partW; pX++) { // pX, pYはパーツ上の座標
+                const mapX = pX - Constants.centerX + partI.x; // マップ上の対応座標
+                const mapY = pY - Constants.centerY + partI.y; // マップ上の対応座標
+                if ((rotated[pY][pX] == 1)) { // この位置にパーツがある
+                    if (mapX < 0 || mapX >= Constants.mapW || mapY < 0 || mapY >= Constants.mapH) {
+                        // 枠外にはみ出る
+                        return undefined;
+                    } else if ((mapX == 0 || mapX == Constants.mapW-1) && (mapY == 0 || mapY == Constants.mapH-1)) {
+                        // 四隅を使う
+                        return undefined;
+                    } else {
+                        memMap[mapY][mapX] = true;
+                        if (mapY == 3) commandLine = true; 
+                        if (mapX >= 1 && mapX <= 5 && mapY >= 1 && mapY <= 5) internal = true;
+                    }
+                }
+            }
+        }
+        if (partI.part.isProgram && !commandLine) return undefined;
+        if (!internal) return undefined;
+        return memMap;
     }
 }
 
