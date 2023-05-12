@@ -1,4 +1,4 @@
-import { Constants as c, Color, Part, PartInstance, PlaceSet, PrecalcPart, PartUtils, partsData } from "./modules/parts_data";
+import { Constants as c, Part, PartInstance, PlaceSet, PrecalcPart, PartUtils, partsData, partNames } from "./modules/parts_data";
 
 import Tagify from '@yaireo/tagify'
 
@@ -153,7 +153,11 @@ function draw(parts: PartInstance[] | undefined) {
 
     // パーツを描画
     if (parts != null) {
-        const partsSorted = parts.sort((a, b) => partsData.indexOf(a.part) - partsData.indexOf(b.part))
+        const partsSorted = [...parts];
+        partsSorted.sort((a, b) => partNames.indexOf(a.part.name) - partNames.indexOf(b.part.name));
+        console.log(partNames.indexOf(partsSorted[0].part.name));
+        
+        
         partsSorted.map((part, i) => {
             drawPart(part);
             drawPartName(part, i);
@@ -247,7 +251,6 @@ function draw(parts: PartInstance[] | undefined) {
         ctx.fillStyle = "white";
         ctx.textAlign = "left"
         ctx.font = "normal 20px ExeChipFont";
-        //ctx.fillText("ロックマンエグゼ6 ナビカスシミュレータ", versionX, versionY);
         ctx.drawImage(appUrlImg, urlX, urlY);
     }
 }
