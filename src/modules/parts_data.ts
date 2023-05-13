@@ -705,3 +705,7 @@ export const partsData: Part[] = [
         ]
     },
 ];
+
+export const partNames = partsData.map((el) => {
+    return el.name;
+});

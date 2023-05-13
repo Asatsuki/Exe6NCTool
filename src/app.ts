@@ -1,4 +1,4 @@
-import { Constants as c, Color, Part, PartInstance, PlaceSet, PrecalcPart, PartUtils, partsData } from "./modules/parts_data";
+import { Constants as c, Part, PartInstance, PlaceSet, PrecalcPart, PartUtils, partsData, partNames } from "./modules/parts_data";
 
 import Tagify from '@yaireo/tagify'
 
@@ -9,6 +9,15 @@ const exeChipFont = new FontFace('ExeChipFont', 'url(./font/ExeChipFont.otf)');
 exeChipFont.load().then((font) => {
     document.fonts.add(font);
 });
+const modalImg = new Map<string, HTMLImageElement>(
+    ["info", "error"].map((el) => {
+        const img = new Image();
+        img.src = `./img/modal_${el}.svg`;
+        return [el, img]
+    }
+));
+const infoModal = new Image();
+infoModal.src = "./img/modal_info.svg";
 const gridImg = new Image();
 gridImg.src = "./img/grid.svg";
 const commandImg = new Image();
@@ -52,7 +61,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
         maxTags: 12,
         dropdown: {
             maxItems: 9999,
-            enabled: 0
+            enabled: 0,
+            placeAbove: true,
         }
     });
 });
@@ -79,7 +89,7 @@ inputElm.onchange = () => {
     doSimulate();
 }
 
-function doSimulate() {
+function getPartList(): Part[] {
     const partsStr = inputElm.value.split(',');
     const partList: Part[] = [];
     partsStr.map((el) => {
@@ -88,14 +98,35 @@ function doSimulate() {
             partList.push(part);
         }
     });
-    
+    return partList;
+}
+
+let timeId: NodeJS.Timeout | undefined = undefined;
+
+function doSimulate() {
+    timeId = setTimeout(() => {drawModal("info", "ケイサンチュウ")}, 50);
+    const partList = getPartList();
     worker.postMessage({partList: partList, precalcParts: precalcParts});
-    
 }
 
 worker.onmessage = e => {
+    clearTimeout(timeId);
     const simulated = e.data.simulated as PartInstance[];
-    draw(simulated);
+    drawBackground();
+    if (simulated != null) {
+        drawParts(simulated);
+    } else {
+        const partList = getPartList();
+        partList.sort((a, b) => {return partNames.indexOf(a.name) - partNames.indexOf(b.name)});
+        partList.map((el, i) => {
+            drawPartName(el.name, i);
+        });
+    }
+    
+    drawForeground();
+    if (simulated == null) {
+        drawModal("error", "ガイトウナシ");
+    }
 }
 
 // 各パーツの配置の計算を何回もやるととても時間がかかるので、事前計算する
@@ -127,23 +158,20 @@ function precalc() {
 
 }
 
+const blockW = 64;
+const blockH = 64;
+const mapX = 32;
+const mapY = 32;
+const nameX = 512;
+const nameY = 52;
 
-function draw(parts: PartInstance[] | undefined) {
-    const blockW = 64;
-    const blockH = 64;
-    const mapX = 32;
-    const mapY = 32;
-    const nameX = 512;
-    const nameY = 52;
-    const lineWidth = 4;
-    const nameHeight = 32;
-    const nameWidth = 120;
-
-    
-    ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+function drawBackground() {
 
     ctx.save();
 
+    ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+    
     // 背景を描画
     ctx.fillStyle = "#1f7ba4";
     ctx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
@@ -151,14 +179,11 @@ function draw(parts: PartInstance[] | undefined) {
     // パーツ名の枠を描画
     ctx.drawImage(partNameImg, nameX, nameY);
 
-    // パーツを描画
-    if (parts != null) {
-        const partsSorted = parts.sort((a, b) => partsData.indexOf(a.part) - partsData.indexOf(b.part))
-        partsSorted.map((part, i) => {
-            drawPart(part);
-            drawPartName(part, i);
-        })
-    }
+    ctx.restore();
+}
+
+function drawForeground() {
+    ctx.save();
 
     // グリッドを描画
     for (let i = 0; i < c.mapH; i++) {
@@ -178,7 +203,31 @@ function draw(parts: PartInstance[] | undefined) {
 
     drawVersion();
 
+    function drawVersion() {
+        const urlX = 2;
+        const urlY = ctx.canvas.height - 32;
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left"
+        ctx.font = "normal 20px ExeChipFont";
+        ctx.drawImage(appUrlImg, urlX, urlY);
+    }
+
     ctx.restore();
+}
+
+function drawParts(parts: PartInstance[] | undefined) {
+    const lineWidth = 4;
+    
+    // パーツを描画
+    if (parts != null) {
+        const partsSorted = [...parts];
+        partsSorted.sort((a, b) => partNames.indexOf(a.part.name) - partNames.indexOf(b.part.name));
+                
+        partsSorted.map((partI, i) => {
+            drawPart(partI);
+            drawPartName(partI.part.name, i);
+        })
+    }
 
     function drawPart(partI: PartInstance) {
         ctx.restore();
@@ -225,31 +274,40 @@ function draw(parts: PartInstance[] | undefined) {
             }
         }
     }
+}
 
-    function drawPartName(partI: PartInstance, index: number) {
-        const xOffset = Math.floor(index / 14) * nameWidth;
-        const yOffset = (index % 14) * nameHeight;
-        ctx.fillStyle = "white";
-        ctx.shadowColor = "#726c69ff";
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-        ctx.textAlign = "left"
-        ctx.font = "normal 22px ExeChipFont";
-        ctx.fillText(partI.part.name, nameX + 10 + xOffset, nameY + 32 + yOffset);
-        ctx.shadowColor = "#00000000";
-    }
+function drawPartName(partName: string, index: number) {
+    const nameHeight = 32;
+    const nameWidth = 120;
 
-    function drawVersion() {
-        const versionX = 6;
-        const versionY = 24;
-        const urlX = 2;
-        const urlY = ctx.canvas.height - 32;
-        ctx.fillStyle = "white";
-        ctx.textAlign = "left"
-        ctx.font = "normal 20px ExeChipFont";
-        //ctx.fillText("ロックマンエグゼ6 ナビカスシミュレータ", versionX, versionY);
-        ctx.drawImage(appUrlImg, urlX, urlY);
-    }
+    const xOffset = Math.floor(index / 14) * nameWidth;
+    const yOffset = (index % 14) * nameHeight;
+    ctx.fillStyle = "white";
+    ctx.shadowColor = "#726c69ff";
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.textAlign = "left"
+    ctx.font = "normal 22px ExeChipFont";
+    ctx.fillText(partName, nameX + 10 + xOffset, nameY + 32 + yOffset);
+    ctx.shadowColor = "#00000000";
+}
+
+function drawModal(type: "info" | "error", message: string) {
+    const img = modalImg.get(type) as HTMLImageElement;
+    const centerX = 512 / 2;
+    const centerY = 512 / 2;
+    const modalX = centerX - img.width / 2;
+    const modalY = centerY - img.height / 2;
+    ctx.drawImage(img, modalX, modalY);
+
+    ctx.fillStyle = "white";
+    ctx.shadowColor = "#726c69ff";
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.textAlign = "center"
+    ctx.font = "normal 26px ExeChipFont";
+    ctx.fillText(message, centerX, centerY);
+    ctx.shadowColor = "#00000000";
 }
 
 function prittyPrintMemMap(memMap: boolean[][]): string {
